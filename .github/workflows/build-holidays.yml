@@ -1,0 +1,34 @@
+name: Build Japanese Holidays ICS
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 3 1 * *" # 毎月1日 03:00 UTC = 12:00 JST 付近
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: "1.26.2"
+
+      - name: Generate ICS
+        run: go run ./cmd/generate-ics
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/japanese-holidays.ics
+          git diff --cached --quiet && exit 0
+          git commit -m "Update japanese-holidays.ics"
+          git push
