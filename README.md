@@ -12,6 +12,11 @@
 
 生成済みの `.ics` ファイルを任意のカレンダーアプリで購読できます。
 
+**ICS URL:**
+```
+https://ebagos.github.io/jp-holidays-ics/japanese-holidays.ics
+```
+
 | アプリ | 手順 |
 |--------|------|
 | Google カレンダー | 「他のカレンダーを追加」→「URL で追加」からICSのURLを入力 |
