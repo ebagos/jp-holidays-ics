@@ -62,8 +62,9 @@ func TestEscapeText(t *testing.T) {
 
 func TestBuildUID_Deterministic(t *testing.T) {
 	h := Holiday{Date: time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC), Title: "元日"}
-	if buildUID(h) != buildUID(h) {
-		t.Error("buildUID is not deterministic")
+	const want = "8dd2601840f5c6f535662d7e3847f557@jp-holidays-cao-example"
+	if got := buildUID(h); got != want {
+		t.Errorf("buildUID = %q, want %q", got, want)
 	}
 }
 
