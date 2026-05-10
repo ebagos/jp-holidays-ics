@@ -45,6 +45,7 @@ func TestEscapeText(t *testing.T) {
 		{"LF", "a\nb", `a\nb`},
 		{"CR removed", "a\rb", "ab"},
 		{"CRLF", "a\r\nb", `a\nb`},
+		{"single backslash", `a\b`, `a\\b`},
 		{"double backslash", `a\\b`, `a\\\\b`},
 		{"multiple specials", "a;b,c\nd", `a\;b\,c\nd`},
 	}

@@ -204,7 +204,7 @@ func writeLine(b *strings.Builder, line string) {
 
 func escapeText(s string) string {
 	replacer := strings.NewReplacer(
-		`\\`, `\\\\`,
+		`\`, `\\`,
 		`;`, `\;`,
 		`,`, `\,`,
 		"\n", `\n`,
