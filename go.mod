@@ -1,4 +1,4 @@
-module githuub.com/ebagos/jp-holidays-ics
+module github.com/ebagos/jp-holidays-ics
 
 go 1.26.2
 
