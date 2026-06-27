@@ -219,7 +219,17 @@ func foldLine(line string) []string {
 	limit := maxLineOctets
 
 	for _, r := range line {
-		runeOctets := len(string(r))
+		runeOctets := 3
+		switch {
+		case r <= 0x7F:
+			runeOctets = 1
+		case r <= 0x7FF:
+			runeOctets = 2
+		case r <= 0xFFFF:
+			runeOctets = 3
+		default:
+			runeOctets = 4
+		}
 		if currentOctets > 0 && currentOctets+runeOctets > limit {
 			lines = append(lines, current.String())
 			current.Reset()
