@@ -28,7 +28,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v6
         with:
-          go-version: "1.26.2"
+          go-version: "1.26"
 
       - name: Generate ICS
         run: go run ./cmd/generate-ics

@@ -20,10 +20,11 @@ import (
 )
 
 const (
-	sourceURL    = "https://www8.cao.go.jp/chosei/shukujitsu/syukujitsu.csv"
-	outputPath   = "public/japanese-holidays.ics"
-	calendarID   = "jp-holidays-cao-example"
-	calendarName = "日本の祝日"
+	sourceURL     = "https://www8.cao.go.jp/chosei/shukujitsu/syukujitsu.csv"
+	outputPath    = "public/japanese-holidays.ics"
+	calendarID    = "jp-holidays-cao-example"
+	calendarName  = "日本の祝日"
+	maxLineOctets = 75
 )
 
 type Holiday struct {
@@ -166,8 +167,6 @@ func buildICS(holidays []Holiday) ([]byte, error) {
 	writeLine(&b, "X-WR-CALDESC:"+escapeText("内閣府 公開CSVから自動生成した日本の祝日カレンダー"))
 	writeLine(&b, "X-WR-TIMEZONE:Asia/Tokyo")
 
-	nowUTC := time.Now().UTC().Format("20060102T150405Z")
-
 	for _, h := range holidays {
 		start := h.Date.Format("20060102")
 		end := h.Date.AddDate(0, 0, 1).Format("20060102") // 終日は翌日exclusive
@@ -175,7 +174,7 @@ func buildICS(holidays []Holiday) ([]byte, error) {
 
 		writeLine(&b, "BEGIN:VEVENT")
 		writeLine(&b, "UID:"+uid)
-		writeLine(&b, "DTSTAMP:"+nowUTC)
+		writeLine(&b, "DTSTAMP:"+buildDTStamp(h))
 		writeLine(&b, "DTSTART;VALUE=DATE:"+start)
 		writeLine(&b, "DTEND;VALUE=DATE:"+end)
 		writeLine(&b, "SUMMARY:"+escapeText(h.Title))
@@ -195,11 +194,47 @@ func buildUID(h Holiday) string {
 	return fmt.Sprintf("%x@%s", sum[:16], calendarID)
 }
 
+func buildDTStamp(h Holiday) string {
+	return h.Date.Format("20060102") + "T000000Z"
+}
+
 func writeLine(b *strings.Builder, line string) {
-	// RFC準拠の厳密な fold をやるなら 75octets 折返しを実装
-	// Proton/主要カレンダーではこの程度でも実用上問題になりにくい
-	b.WriteString(line)
-	b.WriteString("\r\n")
+	for i, folded := range foldLine(line) {
+		if i > 0 {
+			b.WriteByte(' ')
+		}
+		b.WriteString(folded)
+		b.WriteString("\r\n")
+	}
+}
+
+func foldLine(line string) []string {
+	if len([]byte(line)) <= maxLineOctets {
+		return []string{line}
+	}
+
+	lines := make([]string, 0, len(line)/maxLineOctets+1)
+	var current strings.Builder
+	currentOctets := 0
+	limit := maxLineOctets
+
+	for _, r := range line {
+		runeOctets := len(string(r))
+		if currentOctets > 0 && currentOctets+runeOctets > limit {
+			lines = append(lines, current.String())
+			current.Reset()
+			currentOctets = 0
+			limit = maxLineOctets - 1
+		}
+		current.WriteRune(r)
+		currentOctets += runeOctets
+	}
+
+	if currentOctets > 0 {
+		lines = append(lines, current.String())
+	}
+
+	return lines
 }
 
 func escapeText(s string) string {

@@ -27,7 +27,7 @@ https://ebagos.github.io/jp-holidays-ics/japanese-holidays.ics
 
 ### 前提条件
 
-- Go 1.22 以上
+- Go 1.26 以上
 
 ### ICSファイルの生成
 
