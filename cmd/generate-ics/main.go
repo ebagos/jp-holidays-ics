@@ -209,7 +209,7 @@ func writeLine(b *strings.Builder, line string) {
 }
 
 func foldLine(line string) []string {
-	if len([]byte(line)) <= maxLineOctets {
+	if len(line) <= maxLineOctets {
 		return []string{line}
 	}
 
