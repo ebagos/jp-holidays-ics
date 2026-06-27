@@ -180,6 +180,55 @@ func TestBuildICS_UsesCRLF(t *testing.T) {
 	}
 }
 
+func TestBuildICS_DeterministicOutput(t *testing.T) {
+	holidays := []Holiday{
+		{Date: time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC), Title: "元日"},
+	}
+
+	first, err := buildICS(holidays)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	second, err := buildICS(holidays)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if !bytes.Equal(first, second) {
+		t.Error("buildICS should be deterministic for identical holiday data")
+	}
+	if !bytes.Contains(first, []byte("DTSTAMP:20260101T000000Z")) {
+		t.Error("expected DTSTAMP to be derived from the holiday date")
+	}
+}
+
+func TestWriteLine_FoldsLongUTF8Lines(t *testing.T) {
+	line := "X-WR-CALDESC:" + strings.Repeat("内閣府 公開CSVから自動生成した日本の祝日カレンダー", 4)
+
+	var b strings.Builder
+	writeLine(&b, line)
+
+	got := b.String()
+	if !strings.Contains(got, "\r\n ") {
+		t.Fatalf("expected folded continuation line, got %q", got)
+	}
+
+	physicalLines := strings.Split(strings.TrimSuffix(got, "\r\n"), "\r\n")
+	for i, physicalLine := range physicalLines {
+		if gotOctets := len([]byte(physicalLine)); gotOctets > maxLineOctets {
+			t.Errorf("line %d has %d octets, want <= %d: %q", i, gotOctets, maxLineOctets, physicalLine)
+		}
+		if i > 0 && !strings.HasPrefix(physicalLine, " ") {
+			t.Errorf("continuation line %d should start with a space: %q", i, physicalLine)
+		}
+	}
+
+	unfolded := strings.ReplaceAll(strings.TrimSuffix(got, "\r\n"), "\r\n ", "")
+	if unfolded != line {
+		t.Errorf("unfolded line = %q, want %q", unfolded, line)
+	}
+}
+
 // --- fetchHolidays ---
 
 func TestFetchHolidays_ShiftJIS(t *testing.T) {
